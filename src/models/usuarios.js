@@ -14,7 +14,7 @@ const safeDbOperation = async (query, params, operation) => {
     if (metrics?.dbOperations) {
       metrics.dbOperations.inc({
         type: operation,
-        table: 'usuarios' // ✅ nome da tabela corrigido
+        table: 'usuarios'
       });
     }
 
@@ -43,11 +43,54 @@ const createUser = async (user) => {
 
 const getUsers = async () => {
   const result = await safeDbOperation(
-    'SELECT * FROM usuarios', // ✅ também corrigido
+    'SELECT * FROM usuarios ORDER BY id ASC', // Adicionado ORDER BY para consistência
     [],
     'read'
   );
   return result.rows;
 };
 
-module.exports = { createUser, getUsers };
+// NOVO: Função para atualizar um usuário
+const updateUser = async (id, userData) => {
+  const fields = Object.keys(userData);
+  const values = Object.values(userData);
+
+  // Impede a execução se não houver dados para atualizar
+  if (fields.length === 0) {
+    throw new Error("Nenhum dado fornecido para atualização.");
+  }
+
+  // Monta a parte SET da query dinamicamente
+  const setClause = fields
+    .map((field, index) => `"${field}" = $${index + 1}`)
+    .join(', ');
+
+  const query = `
+    UPDATE usuarios
+    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $${fields.length + 1}
+    RETURNING *
+  `;
+
+  const params = [...values, id];
+  const result = await safeDbOperation(query, params, 'update');
+
+  // Retorna o usuário atualizado ou null se não for encontrado
+  return result.rows[0] || null;
+};
+
+// NOVO: Função para deletar um usuário
+const deleteUser = async (id) => {
+  const query = 'DELETE FROM usuarios WHERE id = $1';
+  const result = await safeDbOperation(query, [id], 'delete');
+  // Retorna o número de linhas afetadas (0 ou 1)
+  return result.rowCount;
+};
+
+
+module.exports = {
+  createUser,
+  getUsers,
+  updateUser, // Exporta a nova função
+  deleteUser  // Exporta a nova função
+};
