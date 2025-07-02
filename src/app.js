@@ -10,7 +10,7 @@ app.use(metricsMiddleware);
 
 app.get('/', (req, res) => res.send('API Operacional'));
 app.get('/metrics', metricsEndpoint);
-app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/usuarios', usuarioRoutes); // 👈 já inclui as rotas de endereços
 
 app.use((err, req, res, next) => {
   console.error('🔥 Erro:', err);

@@ -30,11 +30,26 @@ const connect = async (retries = 5, delay = 1000) => {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS enderecos (
+          id SERIAL PRIMARY KEY,
+          usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+          cep VARCHAR(9) NOT NULL,
+          logradouro VARCHAR(100),
+          numero VARCHAR(10) NOT NULL,
+          complemento VARCHAR(100),
+          bairro VARCHAR(50),
+          cidade VARCHAR(50),
+          estado VARCHAR(2),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
       `);
-      console.log('✅ Banco de dados conectado e tabela verificada');
+
+      console.log('✅ Banco de dados conectado e tabelas verificadas');
       return;
     } catch (error) {
-      console.error(`⚠️ Tentativa ${i+1}/${retries}:`, error.message);
+      console.error(`⚠️ Tentativa ${i + 1}/${retries}:`, error.message);
       if (i === retries - 1) throw error;
       await new Promise(res => setTimeout(res, delay));
     }
@@ -42,3 +57,4 @@ const connect = async (retries = 5, delay = 1000) => {
 };
 
 module.exports = { pool, connect };
+
